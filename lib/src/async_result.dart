@@ -14,7 +14,7 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
   AsyncResultDart<W, F> flatMap<W extends Object>(
     FutureOr<ResultDart<W, F>> Function(S success) fn,
   ) {
-    return then((result) => result.fold(fn, Failure.new));
+    return then((result) => result.match(fn, Err.new));
   }
 
   /// Returns a new `Result`, mapping any `Error` value
@@ -22,7 +22,7 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
   AsyncResultDart<S, W> flatMapError<W extends Object>(
     FutureOr<ResultDart<S, W>> Function(F error) fn,
   ) {
-    return then((result) => result.fold(Success.new, fn));
+    return then((result) => result.match(Ok.new, fn));
   }
 
   /// Returns a new `AsyncResultDart`, mapping any `Success` value
@@ -31,12 +31,12 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
     FutureOr<W> Function(S success) fn,
   ) {
     return then(
-      (result) => result.map(fn).fold(
+      (result) => result.map(fn).match(
         (success) async {
-          return Success(await success);
+          return Ok(await success);
         },
         (failure) {
-          return Failure(failure);
+          return Err(failure);
         },
       ),
     );
@@ -48,12 +48,12 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
     FutureOr<W> Function(F error) fn,
   ) {
     return then(
-      (result) => result.mapError(fn).fold(
+      (result) => result.mapError(fn).match(
         (success) {
-          return Success(success);
+          return Ok(success);
         },
         (failure) async {
-          return Failure(await failure);
+          return Err(await failure);
         },
       ),
     );
@@ -78,11 +78,11 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
   /// Returns the Future result of onSuccess for the encapsulated value
   /// if this instance represents `Success` or the result of onError function
   /// for the encapsulated value if it is `Error`.
-  Future<W> fold<W>(
+  Future<W> match<W>(
     W Function(S success) onSuccess,
     W Function(F error) onError,
   ) {
-    return then<W>((result) => result.fold(onSuccess, onError));
+    return then<W>((result) => result.match(onSuccess, onError));
   }
 
   /// Returns the future value of [S] if any.
@@ -96,13 +96,13 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
   }
 
   /// Returns true if the current result is an [Failure].
-  Future<bool> isError() {
-    return then((result) => result.isError());
+  Future<bool> isErr() {
+    return then((result) => result.isErr());
   }
 
   /// Returns true if the current result is a [Success].
-  Future<bool> isSuccess() {
-    return then((result) => result.isSuccess());
+  Future<bool> isOk() {
+    return then((result) => result.isOk());
   }
 
   /// Returns the success value as a throwing expression.
@@ -129,20 +129,20 @@ extension AsyncResultDartExtension<S extends Object, F extends Object> //
   AsyncResultDart<S, R> recover<R extends Object>(
     FutureOr<ResultDart<S, R>> Function(F failure) onFailure,
   ) {
-    return then((result) => result.fold(Success.new, onFailure));
+    return then((result) => result.match(Ok.new, onFailure));
   }
 
   /// Performs the given action on the encapsulated Throwable
   /// exception if this instance represents failure.
   /// Returns the original Result unchanged.
-  AsyncResultDart<S, F> onFailure(void Function(F failure) onFailure) {
-    return then((result) => result.onFailure(onFailure));
+  AsyncResultDart<S, F> onErr(void Function(F failure) onFailure) {
+    return then((result) => result.onErr(onFailure));
   }
 
   /// Performs the given action on the encapsulated value if this
   /// instance represents success. Returns the original Result unchanged.
-  AsyncResultDart<S, F> onSuccess(void Function(S success) onSuccess) {
-    return then((result) => result.onSuccess(onSuccess));
+  AsyncResultDart<S, F> onOk(void Function(S success) onSuccess) {
+    return then((result) => result.onOk(onSuccess));
   }
 
   /// Returns the encapsulated value if this instance represents `Success`
@@ -182,9 +182,9 @@ extension FutureResultExtension<S extends Object> on Future<S> {
   AsyncResultDart<S, Exception> toAsyncResult() async {
     try {
       final value = await this;
-      return Success(value);
+      return Ok(value);
     } on Exception catch (e) {
-      return Failure(e);
+      return Err(e);
     }
   }
 }
@@ -205,9 +205,9 @@ extension FutureResultExtensionVoid on Future<void> {
   AsyncResultDart<Unit, Exception> toAsyncResult() async {
     try {
       await this;
-      return Success(unit);
+      return Ok(unit);
     } on Exception catch (e) {
-      return Failure(e);
+      return Err(e);
     }
   }
 }

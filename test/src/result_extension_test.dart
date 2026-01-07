@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   group('toError', () {
     test('without result type', () {
-      final result = 'error'.toFailure();
+      final result = 'error'.toErr();
 
       expect(result, isA<ResultDart<dynamic, String>>());
       expect(result.exceptionOrNull(), isA<String>());
@@ -13,7 +13,7 @@ void main() {
     });
 
     test('with result type', () {
-      final ResultDart<int, String> result = 'error'.toFailure();
+      final ResultDart<int, String> result = 'error'.toErr();
 
       expect(result, isA<ResultDart<int, String>>());
       expect(result.exceptionOrNull(), isA<String>());
@@ -21,37 +21,37 @@ void main() {
     });
 
     test('throw AssertException if is a Result object', () {
-      final ResultDart<int, String> result = 'error'.toFailure();
-      expect(result.toFailure, throwsA(isA<AssertionError>()));
+      final ResultDart<int, String> result = 'error'.toErr();
+      expect(result.toErr, throwsA(isA<AssertionError>()));
     });
 
     test('throw AssertException if is a Future object', () {
-      expect(Future.value().toFailure, throwsA(isA<AssertionError>()));
+      expect(Future.value().toErr, throwsA(isA<AssertionError>()));
     });
   });
 
   group('toSuccess', () {
     test('without result type', () {
-      final result = 'success'.toSuccess();
+      final result = 'success'.toOk();
 
       expect(result, isA<ResultDart<String, dynamic>>());
       expect(result.getOrNull(), 'success');
     });
 
     test('with result type', () {
-      final ResultDart<String, int> result = 'success'.toSuccess();
+      final ResultDart<String, int> result = 'success'.toOk();
 
       expect(result, isA<ResultDart<String, int>>());
       expect(result.getOrNull(), 'success');
     });
 
     test('throw AssertException if is a Result object', () {
-      final result = 'success'.toSuccess();
-      expect(result.toSuccess, throwsA(isA<AssertionError>()));
+      final result = 'success'.toOk();
+      expect(result.toOk, throwsA(isA<AssertionError>()));
     });
 
     test('throw AssertException if is a Future object', () {
-      expect(Future.value().toSuccess, throwsA(isA<AssertionError>()));
+      expect(Future.value().toOk, throwsA(isA<AssertionError>()));
     });
   });
 }

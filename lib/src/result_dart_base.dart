@@ -27,29 +27,29 @@ sealed class ResultDart<S extends Object, F extends Object> {
   F? exceptionOrNull();
 
   /// Returns true if the current result is an [Failure].
-  bool isError();
+  bool isErr();
 
   /// Returns true if the current result is a [Success].
-  bool isSuccess();
+  bool isOk();
 
   /// Returns the result of onSuccess for the encapsulated value
   /// if this instance represents `Success` or the result of onError function
   /// for the encapsulated value if it is `Failure`.
-  W fold<W>(
+  W match<W>(
     W Function(S success) onSuccess,
     W Function(F failure) onFailure,
   );
 
   /// Performs the given action on the encapsulated value if this
   /// instance represents success. Returns the original Result unchanged.
-  ResultDart<S, F> onSuccess(
+  ResultDart<S, F> onOk(
     void Function(S success) onSuccess,
   );
 
   /// Performs the given action on the encapsulated Throwable
   /// exception if this instance represents failure.
   /// Returns the original Result unchanged.
-  ResultDart<S, F> onFailure(
+  ResultDart<S, F> onErr(
     void Function(F failure) onFailure,
   );
 
@@ -117,12 +117,12 @@ sealed class ResultDart<S extends Object, F extends Object> {
 /// return it when the result of a [Result] is
 /// the expected value.
 @immutable
-final class Success<S extends Object, F extends Object> //
+final class Ok<S extends Object, F extends Object> //
     implements
         ResultDart<S, F> {
   /// Receives the [S] param as
   /// the successful result.
-  const Success(
+  const Ok(
     this._success,
   );
 
@@ -130,28 +130,28 @@ final class Success<S extends Object, F extends Object> //
   /// ```dart
   /// Success.unit() == Success(unit)
   /// ```
-  static Success<type_unit.Unit, F> unit<F extends Object>() {
-    return Success<type_unit.Unit, F>(type_unit.unit);
+  static Ok<type_unit.Unit, F> unit<F extends Object>() {
+    return Ok<type_unit.Unit, F>(type_unit.unit);
   }
 
   final S _success;
 
   @override
-  bool isError() => false;
+  bool isErr() => false;
 
   @override
-  bool isSuccess() => true;
+  bool isOk() => true;
 
   @override
   int get hashCode => _success.hashCode;
 
   @override
   bool operator ==(Object other) {
-    return other is Success && other._success == _success;
+    return other is Ok && other._success == _success;
   }
 
   @override
-  W fold<W>(
+  W match<W>(
     W Function(S success) onSuccess,
     W Function(F error) onFailure,
   ) {
@@ -175,12 +175,12 @@ final class Success<S extends Object, F extends Object> //
   ResultDart<S, W> flatMapError<W extends Object>(
     ResultDart<S, W> Function(F failure) fn,
   ) {
-    return Success<S, W>(_success);
+    return Ok<S, W>(_success);
   }
 
   @override
   ResultDart<F, S> swap() {
-    return Failure(_success);
+    return Err(_success);
   }
 
   @override
@@ -199,12 +199,12 @@ final class Success<S extends Object, F extends Object> //
   @override
   ResultDart<W, F> map<W extends Object>(W Function(S success) fn) {
     final newSuccess = fn(_success);
-    return Success<W, F>(newSuccess);
+    return Ok<W, F>(newSuccess);
   }
 
   @override
   ResultDart<S, W> mapError<W extends Object>(W Function(F error) fn) {
-    return Success<S, W>(_success);
+    return Ok<S, W>(_success);
   }
 
   @override
@@ -214,26 +214,26 @@ final class Success<S extends Object, F extends Object> //
 
   @override
   ResultDart<S, W> pureError<W extends Object>(W error) {
-    return Success<S, W>(_success);
+    return Ok<S, W>(_success);
   }
 
   @override
   ResultDart<S, R> recover<R extends Object>(
     ResultDart<S, R> Function(F failure) onFailure,
   ) {
-    return Success(_success);
+    return Ok(_success);
   }
 
   @override
   AsyncResultDart<S, F> toAsyncResult() async => this;
 
   @override
-  ResultDart<S, F> onFailure(void Function(F failure) onFailure) {
+  ResultDart<S, F> onErr(void Function(F failure) onFailure) {
     return this;
   }
 
   @override
-  ResultDart<S, F> onSuccess(void Function(S success) onSuccess) {
+  ResultDart<S, F> onOk(void Function(S success) onSuccess) {
     onSuccess(_success);
     return this;
   }
@@ -243,9 +243,9 @@ final class Success<S extends Object, F extends Object> //
     G Function(S success) onSuccess,
     W Function(F failure) onFailure,
   ) {
-    return fold(
-      (s) => Success(onSuccess(s)),
-      (f) => Failure(onFailure(f)),
+    return match(
+      (s) => Ok(onSuccess(s)),
+      (f) => Err(onFailure(f)),
     );
   }
 
@@ -254,9 +254,9 @@ final class Success<S extends Object, F extends Object> //
     G success,
     W failure,
   ) {
-    return fold(
-      (s) => Success(success),
-      (f) => Failure(failure),
+    return match(
+      (s) => Ok(success),
+      (f) => Err(failure),
     );
   }
 }
@@ -266,38 +266,38 @@ final class Success<S extends Object, F extends Object> //
 /// return it when the result of a [ResultDart] is
 /// not the expected value.
 @immutable
-final class Failure<S extends Object, F extends Object> //
+final class Err<S extends Object, F extends Object> //
     implements
         ResultDart<S, F> {
   /// Receives the [F] param as
   /// the error result.
-  const Failure(this._failure);
+  const Err(this._failure);
 
   /// Build a `Failure` with `Unit` value.
   /// ```dart
   /// Failure.unit() == Failure(unit)
   /// ```
-  static Failure<S, type_unit.Unit> unit<S extends Object>() {
-    return Failure<S, type_unit.Unit>(type_unit.unit);
+  static Err<S, type_unit.Unit> unit<S extends Object>() {
+    return Err<S, type_unit.Unit>(type_unit.unit);
   }
 
   final F _failure;
 
   @override
-  bool isError() => true;
+  bool isErr() => true;
 
   @override
-  bool isSuccess() => false;
+  bool isOk() => false;
 
   @override
   int get hashCode => _failure.hashCode;
 
   @override
   bool operator ==(Object other) => //
-      other is Failure && other._failure == _failure;
+      other is Err && other._failure == _failure;
 
   @override
-  W fold<W>(
+  W match<W>(
     W Function(S succcess) onSuccess,
     W Function(F failure) onFailure,
   ) {
@@ -314,7 +314,7 @@ final class Failure<S extends Object, F extends Object> //
   ResultDart<W, F> flatMap<W extends Object>(
     ResultDart<W, F> Function(S success) fn,
   ) {
-    return Failure<W, F>(_failure);
+    return Err<W, F>(_failure);
   }
 
   @override
@@ -326,7 +326,7 @@ final class Failure<S extends Object, F extends Object> //
 
   @override
   ResultDart<F, S> swap() {
-    return Success(_failure);
+    return Ok(_failure);
   }
 
   @override
@@ -344,18 +344,18 @@ final class Failure<S extends Object, F extends Object> //
 
   @override
   ResultDart<W, F> map<W extends Object>(W Function(S success) fn) {
-    return Failure<W, F>(_failure);
+    return Err<W, F>(_failure);
   }
 
   @override
   ResultDart<S, W> mapError<W extends Object>(W Function(F failure) fn) {
     final newFailure = fn(_failure);
-    return Failure(newFailure);
+    return Err(newFailure);
   }
 
   @override
   ResultDart<W, F> pure<W extends Object>(W success) {
-    return Failure<W, F>(_failure);
+    return Err<W, F>(_failure);
   }
 
   @override
@@ -374,13 +374,13 @@ final class Failure<S extends Object, F extends Object> //
   AsyncResultDart<S, F> toAsyncResult() async => this;
 
   @override
-  ResultDart<S, F> onFailure(void Function(F failure) onFailure) {
+  ResultDart<S, F> onErr(void Function(F failure) onFailure) {
     onFailure(_failure);
     return this;
   }
 
   @override
-  ResultDart<S, F> onSuccess(void Function(S success) onSuccess) {
+  ResultDart<S, F> onOk(void Function(S success) onSuccess) {
     return this;
   }
 
@@ -389,9 +389,9 @@ final class Failure<S extends Object, F extends Object> //
     G Function(S success) onSuccess,
     W Function(F failure) onFailure,
   ) {
-    return fold(
-      (s) => Success(onSuccess(s)),
-      (f) => Failure(onFailure(f)),
+    return match(
+      (s) => Ok(onSuccess(s)),
+      (f) => Err(onFailure(f)),
     );
   }
 
@@ -400,9 +400,9 @@ final class Failure<S extends Object, F extends Object> //
     G success,
     W failure,
   ) {
-    return fold(
-      (s) => Success(success),
-      (f) => Failure(failure),
+    return match(
+      (s) => Ok(success),
+      (f) => Err(failure),
     );
   }
 }
